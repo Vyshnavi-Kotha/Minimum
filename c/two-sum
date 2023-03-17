@@ -1,0 +1,68 @@
+typedef struct __hinfo {
+    int idx;
+    int val;
+} H_INFO;
+
+typedef struct __hash_table {
+    int size;
+    H_INFO *list;
+} HASHER;
+
+int hash(HASHER *obj, int key)
+{
+    int r = key % obj->size;
+    return r < 0 ? r + obj->size : r;
+}
+
+int hash_find(HASHER *ht, int target)
+{
+    int index = hash(ht, target);
+    while (ht->list[index].idx != -1) {
+        if (ht->list[index].val == target)
+            return ht->list[index].idx;
+        index++;
+        index %= ht->size;
+    }
+    return -1;
+}
+
+void hash_add(HASHER *ht, int key, int idx)
+{
+    int index = hash(ht, key);
+    while (ht->list[index].idx != -1) {
+        index++;
+        index %= ht->size;
+    }
+    ht->list[index].idx = idx;
+    ht->list[index].val = key;
+}
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+int* twoSum(int* nums, int numsSize, int target, int* returnSize)
+{
+    int *indices = NULL;
+    *returnSize = 0;
+    HASHER obj;
+    obj.list = malloc(sizeof(H_INFO)*numsSize);
+    obj.size = numsSize;
+    for (int i = 0; i < numsSize; i++)
+        obj.list[i].idx = -1;
+    
+    for (int i = 0; i < numsSize; i++) {
+        int complement = target - nums[i];
+        int idx = hash_find(&obj, complement);
+        if (-1 != idx) {
+            indices = (int *) malloc(sizeof(int) * 2);
+            indices[0] = idx;
+            indices[1] = i;
+            *returnSize = 2;
+            break;
+        }
+        hash_add(&obj, nums[i], i);
+    }
+    
+    free(obj.list);
+    return indices;
+}
